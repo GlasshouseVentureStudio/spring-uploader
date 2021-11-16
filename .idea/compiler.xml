@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="io.fruitful.sample.uploader" target="1.8" />
+      <module name="io.fruitful.sample.uploader.main" target="1.8" />
+      <module name="io.fruitful.sample.uploader.test" target="1.8" />
+      <module name="io.fruitful.spring.uploader" target="1.8" />
+      <module name="io.fruitful.spring.uploader.main" target="1.8" />
+      <module name="io.fruitful.spring.uploader.test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
