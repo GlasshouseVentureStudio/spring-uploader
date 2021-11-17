@@ -16,6 +16,6 @@ public class EnableUploaderAnnotationProcessor {
 	public void process(EnableUploader enableUploaderAnnotation) {
 		LOGGER.info("Uploader feature enabled: {}", enableUploaderAnnotation);
 
-
+		uploadService.initialize(enableUploaderAnnotation);
 	}
 }

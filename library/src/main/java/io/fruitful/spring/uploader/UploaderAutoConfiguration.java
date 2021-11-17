@@ -22,8 +22,13 @@ public class UploaderAutoConfiguration {
 	}
 
 	@Bean
+	UploadConfig uploadConfig() {
+		return new UploadConfig();
+	}
+
+	@Bean
 	UploadService uploadService() {
-		return new UploadService();
+		return new UploadService(uploadConfig());
 	}
 
 	@Bean

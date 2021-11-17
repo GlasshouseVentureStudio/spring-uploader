@@ -6,6 +6,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface EnableUploader {
-	long maxFileSize() default 2L*1024*1024*1024; // 2G file size maximum default set
+	long maxFileSize() default -1; // No limitation //2L*1024*1024*1024; 2G file size maximum default set
 	String temporaryUploadFolder() default "tmp_upload"; // relative folder from executing file directory
 }
