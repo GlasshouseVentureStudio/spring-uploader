@@ -1,5 +1,7 @@
 package io.fruitful.spring.uploader.dto;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -17,12 +19,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+@Getter
+@Setter
 public class MultipartUploadParser {
 	final Logger log = LoggerFactory.getLogger(MultipartUploadParser.class);
 
 	private Map<String, String> params = new HashMap<>();
 
-	private List<FileItem> files = new ArrayList<FileItem>();
+	private List<FileItem> files = new ArrayList<>();
 
 	// fileItemsFactory is a field (even though it's scoped to the constructor) to
 	// prevent the
@@ -34,7 +38,8 @@ public class MultipartUploadParser {
 	// file when the FileItemsFactory marker object is GCed
 	private DiskFileItemFactory fileItemsFactory;
 
-	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context) throws Exception {
+	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context)
+			throws IOException, FileUploadException {
 		if (!repository.exists() && !repository.mkdirs()) {
 			throw new IOException("Unable to mkdirs to " + repository.getAbsolutePath());
 		}
@@ -77,8 +82,8 @@ public class MultipartUploadParser {
 		}
 
 		log.debug("-- POST PARAMS --");
-		for (String key : params.keySet()) {
-			log.debug("{}: {}", key, params.get(key));
+		for (Map.Entry<String, String> entry : params.entrySet()) {
+			log.debug("{}: {}", entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -94,10 +99,6 @@ public class MultipartUploadParser {
 				files.add(item);
 			}
 		}
-	}
-
-	public Map<String, String> getParams() {
-		return params;
 	}
 
 	public List<FileItem> getFiles() {
