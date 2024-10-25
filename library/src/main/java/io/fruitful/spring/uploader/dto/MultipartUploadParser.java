@@ -1,14 +1,15 @@
 package io.fruitful.spring.uploader.dto;
 
 import io.fruitful.spring.uploader.util.StringHelper;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.JakartaFileCleaner;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
-import org.apache.commons.io.FileCleaningTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,13 +37,13 @@ public class MultipartUploadParser {
 	// file when the FileItemsFactory marker object is GCed
 	private DiskFileItemFactory fileItemsFactory;
 
-	public MultipartUploadParser(HttpServletRequest request, File repository)
+	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context)
 			throws IOException {
 		if (!repository.exists() && !repository.mkdirs()) {
-			throw new IOException("Unable to mkdirs to " + repository.getPath());
+			throw new IOException("Unable to mkdirs to " + repository.getAbsolutePath());
 		}
 
-		fileItemsFactory = setupFileItemFactory(repository);
+		fileItemsFactory = setupFileItemFactory(repository, context);
 
 		JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload =
 				new JakartaServletFileUpload<>(fileItemsFactory);
@@ -63,11 +64,11 @@ public class MultipartUploadParser {
 		}
 	}
 
-	private DiskFileItemFactory setupFileItemFactory(File repository) {
+	private DiskFileItemFactory setupFileItemFactory(File repository, ServletContext context) {
 		return DiskFileItemFactory.builder()
 				.setBufferSize(DiskFileItemFactory.DEFAULT_THRESHOLD)
 				.setPath(repository.toPath())
-				.setFileCleaningTracker(new FileCleaningTracker())
+				.setFileCleaningTracker(JakartaFileCleaner.getFileCleaningTracker(context))
 				.get();
 	}
 

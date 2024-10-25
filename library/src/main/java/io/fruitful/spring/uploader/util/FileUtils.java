@@ -49,7 +49,7 @@ public class FileUtils {
 		try {
 			delete(file);
 		} catch (Exception e) {
-			log.error("Error deleting file", e);
+			// ignore
 		}
 	}
 
@@ -72,7 +72,7 @@ public class FileUtils {
 		if (dir != null && !dir.exists()) {
 			boolean mkdirResult = dir.mkdirs();
 			if (!mkdirResult) {
-				log.error("Cannot create directory {}", dir.getPath());
+				log.error("Cannot create directory {}", dir.getAbsolutePath());
 			}
 		}
 	}
@@ -199,7 +199,7 @@ public class FileUtils {
 				Long bytesWrittenToDisk = out.length();
 				if (!expectedFileSize.equals(bytesWrittenToDisk)) {
 					log.warn("Expected file {} to be {} bytes; file on disk is {} bytes",
-					         out.getPath(), expectedFileSize, 1);
+					         out.getAbsolutePath(), expectedFileSize, 1);
 					FileUtils.silenceDelete(out);
 					throw new IOException(
 							String.format("Unexpected file size mismatch. Actual bytes %s. Expected bytes %s.",

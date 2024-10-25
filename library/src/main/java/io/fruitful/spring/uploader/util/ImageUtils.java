@@ -8,6 +8,8 @@ import com.drew.metadata.exif.ExifDirectoryBase;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.jpeg.JpegDirectory;
 import io.fruitful.spring.uploader.constant.MediaConst;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.imgscalr.Scalr;
@@ -16,10 +18,14 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ImageUtils {
 
 	private static final BufferedImageOp[] NO_FILTER = new BufferedImageOp[]{null};
@@ -54,12 +60,12 @@ public class ImageUtils {
 				Map<Object, Object> info = readImageEXIF(imageFile);
 
 				int orientation = 0;
-				if (info != null && info.get("orientation") != null) {
+				if (info.get("orientation") != null) {
 					orientation = (int) info.get("orientation");
 				}
 
 				// Rotate image if needed
-				if (info != null && orientation > 1) {
+				if (orientation > 1) {
 					switch (orientation) {
 						case 2: // 2) transform="-flip horizontal";
 							buffOriginalImage = Scalr.rotate(buffOriginalImage, Scalr.Rotation.FLIP_HORZ, NO_FILTER);
@@ -246,6 +252,9 @@ public class ImageUtils {
 						return xxlargePath;
 					}
 					break;
+
+				default:
+					break;
 			}
 
 			buffImage.getGraphics().dispose();
@@ -268,7 +277,7 @@ public class ImageUtils {
 			// read all meta data of image
 			metadata = ImageMetadataReader.readMetadata(imageFile);
 		} catch (Exception e) {
-			return null;
+			return Collections.emptyMap();
 		}
 
 		if (metadata != null) {
@@ -302,16 +311,12 @@ public class ImageUtils {
 	}
 
 	public static Scalr.Rotation getRotation(int orientation) {
-		switch (orientation) {
-			case 6:
-				return Scalr.Rotation.CW_90;
-			case 3:
-				return Scalr.Rotation.CW_180;
-			case 8:
-				return Scalr.Rotation.CW_270;
-			default:
-				return null;
-		}
+		return switch (orientation) {
+			case 6 -> Scalr.Rotation.CW_90;
+			case 3 -> Scalr.Rotation.CW_180;
+			case 8 -> Scalr.Rotation.CW_270;
+			default -> null;
+		};
 	}
 
 	public static InputStream convertPNGBufferedImageToInputStream(BufferedImage image) throws IOException {
@@ -319,5 +324,84 @@ public class ImageUtils {
 		ImageIO.write(image, MediaConst.EXT_PNG, outputStream);
 		byte[] imageBytes = outputStream.toByteArray();
 		return new ByteArrayInputStream(imageBytes);
+	}
+
+	public static String resizeGifImage(String imageFullPath, String size, String rootUploadDirectory,
+	                                    String ffmpegPath) throws IOException {
+		log.info("Start resize GIF image {}", size);
+		double width = 0;
+		double height = 0;
+		String outputPath = null;
+		File imageFile = new File(imageFullPath);
+		String baseName = FilenameUtils.getBaseName(imageFullPath);
+		BufferedImage buffImage = ImageIO.read(imageFile);
+		if (buffImage == null) {
+			return null;
+		}
+
+		switch (size) {
+			case MediaConst.IMAGE_SIZE_SMALL:
+				width = ImageUtils.IMAGE_SIZE_SMALL_WIDTH;
+				height = width * buffImage.getHeight() / buffImage.getWidth();
+				outputPath = String.format("%s%s_s.%s", rootUploadDirectory, baseName, MediaConst.EXT_GIF);
+				break;
+			case MediaConst.IMAGE_SIZE_MEDIUM:
+				width = ImageUtils.IMAGE_SIZE_MEDIUM_WIDTH;
+				height = width * buffImage.getHeight() / buffImage.getWidth();
+				outputPath = String.format("%s%s_m.%s", rootUploadDirectory, baseName, MediaConst.EXT_GIF);
+				break;
+			case MediaConst.IMAGE_SIZE_LARGE:
+				width = ImageUtils.IMAGE_SIZE_LARGE_WIDTH;
+				height = width * buffImage.getHeight() / buffImage.getWidth();
+				outputPath = String.format("%s%s_l.%s", rootUploadDirectory, baseName, MediaConst.EXT_GIF);
+				break;
+			default:
+				break;
+		}
+
+		if (outputPath != null) {
+			String scale = String.format("scale=%f:%f", width, height);
+			String[] args = new String[]{ffmpegPath, "-i", imageFullPath, "-vf", scale, outputPath};
+			try {
+				int convertTimeout = 1; // 1 minute
+				Process p = Runtime.getRuntime().exec(args);
+				boolean status = p.waitFor(convertTimeout, TimeUnit.MINUTES);
+				if (status && new File(outputPath).exists()) {
+					log.info("Resize GIF image successfully");
+					return outputPath;
+				}
+			} catch (InterruptedException e) {
+				log.error("convert to gif error: {}", e.getMessage());
+				Thread.currentThread().interrupt();
+			}
+		}
+
+		return outputPath;
+	}
+
+	public static String convertHeicImage(String imageFullPath, String rootUploadDirectory, String heifConvertPath,
+	                                      Consumer<String> removeFileOnServer) {
+		log.info("Start convert HEIC image {} to JPG", imageFullPath);
+		String baseName = FilenameUtils.getBaseName(imageFullPath);
+		String outputPath = String.format("%s%s.%s", rootUploadDirectory, baseName, MediaConst.EXT_JPG);
+
+		String[] args = new String[]{heifConvertPath, imageFullPath, outputPath};
+		try {
+			int convertTimeout = 1; // 1 minute
+			Process p = Runtime.getRuntime().exec(args);
+			boolean status = p.waitFor(convertTimeout, TimeUnit.MINUTES);
+			if (status && new File(outputPath).exists()) {
+				log.info("Convert HEIC image successfully");
+				// remove file heic
+				removeFileOnServer.accept(imageFullPath);
+				return outputPath;
+			}
+		} catch (InterruptedException e) {
+			log.error("convert to HEIC error: {}", e.getMessage());
+			Thread.currentThread().interrupt();
+		} catch (IOException e) {
+			log.error("convert to HEIC error: {}", e.getMessage(), e);
+		}
+		return null;
 	}
 }

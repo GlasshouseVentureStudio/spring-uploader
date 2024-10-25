@@ -4,9 +4,7 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="/usr/local/Cellar/gradle/6.8.3/libexec" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
@@ -16,9 +14,8 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/library" />
-        <option name="gradleHome" value="/usr/local/Cellar/gradle/6.8.3/libexec" />
+        <option name="gradleJvm" value="openjdk-21" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
@@ -28,9 +25,7 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/sample" />
-        <option name="gradleHome" value="/usr/local/Cellar/gradle/6.8.3/libexec" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />

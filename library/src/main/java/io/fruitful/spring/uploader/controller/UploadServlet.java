@@ -6,6 +6,7 @@ import io.fruitful.spring.uploader.exception.MergePartsException;
 import io.fruitful.spring.uploader.service.MediaHelperService;
 import io.fruitful.spring.uploader.util.FileUtils;
 import io.fruitful.spring.uploader.util.StringHelper;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,16 +24,12 @@ public class UploadServlet extends HttpServlet {
 	private static final long serialVersionUID = -1551073211800080798L;
 	private static final int SUCCESS_RESPONSE_CODE = 200;
 
-	private File uploadDir;
-	private File tempDir;
+	private final File uploadDir;
+	private final File tempDir;
 	private final UploadConfig config;
 
 	public UploadServlet(UploadConfig uploadConfig) {
 		this.config = uploadConfig;
-	}
-
-	@Override
-	public void init() {
 		uploadDir = new File(Optional.ofNullable(config.getUploadFolder()).orElse(""));
 		tempDir = new File(Optional.ofNullable(config.getTemporaryFolder()).orElse(""));
 		FileUtils.mkDir(uploadDir);
@@ -46,11 +43,12 @@ public class UploadServlet extends HttpServlet {
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) {
-		resp.setContentType("text/plain");
+		resp.setContentType("application/json");
 		resp.setStatus(SUCCESS_RESPONSE_CODE);
 		try {
 			if (JakartaServletFileUpload.isMultipartContent(req)) {
-				MultipartUploadParser multipartUploadParser = new MultipartUploadParser(req, tempDir);
+				ServletContext servletContext = getServletContext();
+				MultipartUploadParser multipartUploadParser = new MultipartUploadParser(req, tempDir, servletContext);
 				RequestParser requestParser = RequestParser.getInstance(req, multipartUploadParser);
 				writeFileForMultipartRequest(requestParser, resp);
 
@@ -175,7 +173,8 @@ public class UploadServlet extends HttpServlet {
 			FileInputStream fileInputStream = new FileInputStream(outputFile);
 			MultipartFile multipartFile = new DiskMultipartFile(request.getFilename(), request.getFilename(),
 			                                                    null, fileInputStream);
-			MediaInfo mediaInfo = buildMediaInfo(multipartFile, request.getUuid(), request.getOriginal());
+			boolean original = Optional.ofNullable(request.getOriginal()).orElse(false);
+			MediaInfo mediaInfo = buildMediaInfo(multipartFile, request.getUuid(), original);
 			FileUtils.deleteDirectory(dir);
 
 			Function<MediaInfo, String> mediaHandler = config.getMediaHandler();

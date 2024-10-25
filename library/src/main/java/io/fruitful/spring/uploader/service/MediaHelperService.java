@@ -184,7 +184,7 @@ public class MediaHelperService {
 		// all video will be converted to mp4 format
 		media.setUrl(media.getFilename().replace(ext, MediaConst.EXT_MP4));
 		// can extract thumbnail from both mp4 and mov video
-		File thumbnail = extractVideoThumbnail(uploadDir, videoFile.getPath(), uploadConfig);
+		File thumbnail = extractVideoThumbnail(uploadDir, videoFile.getAbsolutePath(), uploadConfig);
 		if (thumbnail != null) {
 			saveThumbnailMedia(media, thumbnail);
 		}
@@ -199,7 +199,7 @@ public class MediaHelperService {
 		String baseName = FilenameUtils.getBaseName(ffmpegPath);
 		String thumbName = String.format("%s_extract%s%s", baseName, FilenameUtils.EXTENSION_SEPARATOR,
 		                                 ffmpegThumbExt);
-		String thumbPath = new File(uploadDir, thumbName).getPath();
+		String thumbPath = new File(uploadDir, thumbName).getAbsolutePath();
 		try {
 			return new VideoProcessor(ffmpegPath).process(filePath, thumbPath, ffmpegStartTime, ffmpegThumbExt);
 		} catch (Exception e) {
@@ -222,10 +222,10 @@ public class MediaHelperService {
 
 	public static String convertToPng(File imageFile, String contentType, String ffmpegPath) {
 		log.info("convert image with content type {} to png", contentType);
-		String fileName = FilenameUtils.getName(imageFile.getPath());
+		String fileName = FilenameUtils.getName(imageFile.getAbsolutePath());
 		String newFilePath = imageFile.getParent() + File.separator + fileName + "." + MediaConst.EXT_PNG;
 
-		String[] args = new String[]{ffmpegPath, "-i", imageFile.getPath(), newFilePath};
+		String[] args = new String[]{ffmpegPath, "-i", imageFile.getAbsolutePath(), newFilePath};
 
 		try {
 			int convertTimeout = 1; // 1 minute
@@ -241,5 +241,10 @@ public class MediaHelperService {
 			log.error("convert to png error: {}", e.getMessage(), e);
 		}
 		return null;
+	}
+
+	public static String getExtension(String contentType) {
+		String ext = FileUtils.CONTENT_MAP.get(contentType);
+		return StringHelper.isEmpty(ext) ? "" : ext.toLowerCase();
 	}
 }
