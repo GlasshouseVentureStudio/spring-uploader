@@ -1,32 +1,50 @@
 plugins {
-    id 'org.springframework.boot' version '2.5.6'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
     id 'java-library'
+    id 'maven-publish'
 }
 
 group = 'io.fruitful.spring'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 sourceCompatibility = '1.8'
+
+jar {
+    enabled = true
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += '-parameters'
+    options.compilerArgs += ['-Xlint:deprecation']
+}
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-    compileOnly('org.springframework.boot:spring-boot-starter')
-    compileOnly("org.springframework.boot:spring-boot-starter-tomcat")
-    implementation 'commons-fileupload:commons-fileupload:1.4'
-    implementation 'org.springframework:spring-web:5.0.20.RELEASE'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
+    implementation 'commons-fileupload:commons-fileupload:1.5'
     compileOnly "org.projectlombok:lombok:1.18.30"
     annotationProcessor "org.projectlombok:lombok:1.18.30"
     implementation 'org.apache.tika:tika-core:2.9.1'
     implementation 'com.drewnoakes:metadata-extractor:2.18.0'
     implementation 'org.imgscalr:imgscalr-lib:4.2'
+    compileOnly 'javax.servlet:servlet-api:3.0-alpha-1'
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
 
 test {
     useJUnitPlatform()

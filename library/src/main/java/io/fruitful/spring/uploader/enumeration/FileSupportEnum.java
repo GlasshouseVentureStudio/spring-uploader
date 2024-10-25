@@ -1,8 +1,8 @@
 package io.fruitful.spring.uploader.enumeration;
 
+import io.fruitful.spring.uploader.util.StringHelper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 
@@ -32,7 +32,7 @@ public enum FileSupportEnum {
 	}
 
 	public static FileSupportEnum getFileSupport(String contentType) {
-		return StringUtils.hasText(contentType) ?
+		return StringHelper.hasText(contentType) ?
 		       Arrays.stream(FileSupportEnum.values())
 				       .filter(item -> item.getTypes().toLowerCase().contains(contentType.toLowerCase()))
 				       .findFirst()

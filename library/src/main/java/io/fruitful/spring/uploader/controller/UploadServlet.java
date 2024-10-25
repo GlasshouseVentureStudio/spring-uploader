@@ -5,10 +5,9 @@ import io.fruitful.spring.uploader.enumeration.FileSupportEnum;
 import io.fruitful.spring.uploader.exception.MergePartsException;
 import io.fruitful.spring.uploader.service.MediaHelperService;
 import io.fruitful.spring.uploader.util.FileUtils;
+import io.fruitful.spring.uploader.util.StringHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -198,7 +197,7 @@ public class UploadServlet extends HttpServlet {
 		try {
 			File uploadedFile = FileUtils.saveFileOnServer(uploadDir, file.getInputStream(), originalExt, null);
 
-			if (!StringUtils.hasText(contentType) || contentType.equals("application/octet-stream")) {
+			if (StringHelper.isEmpty(contentType) || contentType.equals("application/octet-stream")) {
 				contentType = FileUtils.guessContentType(uploadedFile);
 				fileType = FileSupportEnum.getFileType(contentType);
 			}
@@ -206,9 +205,10 @@ public class UploadServlet extends HttpServlet {
 			media.setGuid(guid);
 			media.setContentType(contentType);
 			media.setOriginalFilename(originalFilename);
+			media.setUrl(uploadedFile.getName());
 			media.setFilename(uploadedFile.getName());
 
-			MediaHelperService.saveMediaInfo(uploadDir, media, uploadedFile, fileType, originalExt, original);
+			MediaHelperService.saveMediaInfo(uploadDir, media, uploadedFile, fileType, originalExt, original, config);
 
 		} catch (IOException e) {
 			log.error(e.getMessage());

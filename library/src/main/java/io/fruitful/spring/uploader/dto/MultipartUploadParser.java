@@ -1,5 +1,6 @@
 package io.fruitful.spring.uploader.dto;
 
+import io.fruitful.spring.uploader.util.StringHelper;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.fileupload.FileItem;
@@ -10,7 +11,6 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileCleaningTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +41,7 @@ public class MultipartUploadParser {
 	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context)
 			throws IOException, FileUploadException {
 		if (!repository.exists() && !repository.mkdirs()) {
-			throw new IOException("Unable to mkdirs to " + repository.getAbsolutePath());
+			throw new IOException("Unable to mkdirs to " + repository.getPath());
 		}
 
 		fileItemsFactory = setupFileItemFactory(repository, context);
@@ -77,8 +77,8 @@ public class MultipartUploadParser {
 
 	private void writeDebugInfo(HttpServletRequest request) {
 		log.debug("-- POST HEADERS --");
-		for (String header : Collections.list(request.getHeaderNames())) {
-			log.debug("{}: {}", header, request.getHeader(header));
+		for (Object header : Collections.list(request.getHeaderNames())) {
+			log.debug("{}: {}", header, request.getHeader(header.toString()));
 		}
 
 		log.debug("-- POST PARAMS --");
@@ -92,7 +92,7 @@ public class MultipartUploadParser {
 			if (item.isFormField()) {
 				String key = item.getFieldName();
 				String value = item.getString("UTF-8");
-				if (StringUtils.hasLength(key)) {
+				if (StringHelper.hasLength(key)) {
 					params.put(key, value);
 				}
 			} else {

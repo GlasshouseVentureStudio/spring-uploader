@@ -1,8 +1,7 @@
 package io.fruitful.spring.uploader.dto;
 
+import io.fruitful.spring.uploader.util.FileUtils;
 import lombok.Getter;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -12,11 +11,8 @@ import java.io.InputStream;
 @Getter
 public class DiskMultipartFile implements MultipartFile {
 	private String name;
-
 	private String originalFilename;
-
 	private String contentType;
-
 	private byte[] content;
 
 	/**
@@ -37,7 +33,7 @@ public class DiskMultipartFile implements MultipartFile {
 	 * @throws IOException if reading from the stream failed
 	 */
 	public DiskMultipartFile(String name, InputStream contentStream) throws IOException {
-		this(name, "", null, FileCopyUtils.copyToByteArray(contentStream));
+		this(name, "", null, FileUtils.copyToByteArray(contentStream));
 	}
 
 	/**
@@ -67,7 +63,7 @@ public class DiskMultipartFile implements MultipartFile {
 	public DiskMultipartFile(String name, String originalFilename, String contentType, InputStream contentStream)
 			throws IOException {
 
-		this(name, originalFilename, contentType, FileCopyUtils.copyToByteArray(contentStream));
+		this(name, originalFilename, contentType, FileUtils.copyToByteArray(contentStream));
 	}
 
 	@Override
@@ -92,7 +88,7 @@ public class DiskMultipartFile implements MultipartFile {
 
 	@Override
 	public void transferTo(File dest) throws IOException, IllegalStateException {
-		FileCopyUtils.copy(this.content, dest);
+		FileUtils.copy(this.content, dest);
 	}
 
 }

@@ -11,14 +11,17 @@ import java.util.Date;
 @NoArgsConstructor
 public class MediaInfo {
 
-	private String id;
 	private String originalFilename;
 	private String filename;
-	private String thumbnailId;
 	private String contentType;
 	private String url;
-	private Boolean external;
 	private Boolean processing;
+	private String guid;
+	private Integer width;
+	private Integer height;
+	private MediaThumbnailInfo thumbnail;
+	
+	private Boolean external;
 	private Long duration;
 	private Date uploadedDate;
 	private String cdnOrigin;
@@ -27,13 +30,8 @@ public class MediaInfo {
 	private String cdnLarge;
 	private String cdnMedium;
 	private String cdnSmall;
-	private String guid;
-	private String userId;
 	private Integer type;
 	private String durationText;
 	private Date cdnTime;
-	private Integer width;
-	private Integer height;
 	private String externalLink;
-	private MediaInfo thumbnail;
 }

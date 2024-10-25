@@ -1,11 +1,11 @@
 package io.fruitful.spring.uploader.dto;
 
+import io.fruitful.spring.uploader.util.StringHelper;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.FileItem;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -210,7 +210,7 @@ public class RequestParser {
 
 	private static Boolean formatBooleanString(String boolValue) {
 		try {
-			return StringUtils.hasText(boolValue) ? Boolean.valueOf(boolValue) : null;
+			return StringHelper.hasText(boolValue) ? Boolean.valueOf(boolValue) : null;
 		} catch (Exception e) {
 			return null;
 		}

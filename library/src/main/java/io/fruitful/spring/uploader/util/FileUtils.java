@@ -1,5 +1,6 @@
 package io.fruitful.spring.uploader.util;
 
+import io.fruitful.spring.uploader.dto.MultipartFile;
 import io.fruitful.spring.uploader.exception.MergePartsException;
 import io.fruitful.spring.uploader.service.PartitionFilesFilter;
 import lombok.AccessLevel;
@@ -9,8 +10,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeTypes;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -24,6 +23,7 @@ public class FileUtils {
 	public static final char UNIX_SEPARATOR = '/';
 	public static final char WINDOWS_SEPARATOR = '\\';
 	public static final char EXTENSION_SEPARATOR = '.';
+	public static final int BUFFER_SIZE = 4096;
 	public static final Map<String, String> CONTENT_MAP = new HashMap<>();
 
 	static {
@@ -47,10 +47,7 @@ public class FileUtils {
 
 	public static void silenceDelete(File file) {
 		try {
-			boolean deleteResult = file.delete();
-			if (!deleteResult) {
-				log.error("Error deleting file {}", file.getName());
-			}
+			delete(file);
 		} catch (Exception e) {
 			log.error("Error deleting file", e);
 		}
@@ -75,17 +72,15 @@ public class FileUtils {
 		if (dir != null && !dir.exists()) {
 			boolean mkdirResult = dir.mkdirs();
 			if (!mkdirResult) {
-				log.error("Cannot create directory {}", dir.getAbsolutePath());
+				log.error("Cannot create directory {}", dir.getPath());
 			}
 		}
 	}
 
-	public static File mergeFiles(File outputFile, File partFile) throws IOException {
+	public static void mergeFiles(File outputFile, File partFile) throws IOException {
 		FileOutputStream fos = new FileOutputStream(outputFile, true);
 
-		try {
-			FileInputStream fis = new FileInputStream(partFile);
-
+		try (FileInputStream fis = new FileInputStream(partFile)) {
 			try {
 				IOUtils.copy(fis, fos);
 			} finally {
@@ -94,8 +89,6 @@ public class FileUtils {
 		} finally {
 			IOUtils.closeQuietly(fos);
 		}
-
-		return outputFile;
 	}
 
 	public static String getName(final String fileName) {
@@ -150,10 +143,10 @@ public class FileUtils {
 	public static File saveFileOnServer(File uploadDir, InputStream file, String extension, String fileName)
 			throws IOException {
 		// Generate random file name if not provide
-		if (!StringUtils.hasText(fileName)) {
+		if (StringHelper.isEmpty(fileName)) {
 			fileName = UUID.randomUUID().toString().replace("-", "");
 			// generate random name with no extension
-			if (StringUtils.hasText(extension)) {
+			if (StringHelper.hasText(extension)) {
 				fileName = String.format("%s%s%s", fileName, FileUtils.EXTENSION_SEPARATOR, extension);
 			}
 		}
@@ -182,7 +175,7 @@ public class FileUtils {
 				// detect by filename first
 				contentType = tika.detect(uploadedFile.getName());
 
-				if (!StringUtils.hasText(contentType) || contentType.equalsIgnoreCase(MimeTypes.OCTET_STREAM)) {
+				if (StringHelper.isEmpty(contentType) || contentType.equalsIgnoreCase(MimeTypes.OCTET_STREAM)) {
 					FileInputStream fileInputStream = new FileInputStream(uploadedFile);
 					contentType = tika.detect(fileInputStream);
 				}
@@ -206,7 +199,7 @@ public class FileUtils {
 				Long bytesWrittenToDisk = out.length();
 				if (!expectedFileSize.equals(bytesWrittenToDisk)) {
 					log.warn("Expected file {} to be {} bytes; file on disk is {} bytes",
-					         out.getAbsolutePath(), expectedFileSize, 1);
+					         out.getPath(), expectedFileSize, 1);
 					FileUtils.silenceDelete(out);
 					throw new IOException(
 							String.format("Unexpected file size mismatch. Actual bytes %s. Expected bytes %s.",
@@ -243,10 +236,9 @@ public class FileUtils {
 		return file != null && Files.isSymbolicLink(file.toPath());
 	}
 
-	public static File delete(final File file) throws IOException {
+	public static void delete(final File file) throws IOException {
 		Objects.requireNonNull(file, "file");
 		Files.delete(file.toPath());
-		return file;
 	}
 
 	public static void cleanDirectory(final File directory) throws IOException {
@@ -256,10 +248,7 @@ public class FileUtils {
 		assert files != null;
 		for (File file : files) {
 			try {
-				boolean deleteResult = file.delete();
-				if (!deleteResult) {
-					throw new IOException("Cannot delete file: " + file);
-				}
+				delete(file);
 			} catch (final Exception ioe) {
 				log.error(ioe.getMessage(), ioe);
 				causeList.add(ioe);
@@ -280,5 +269,27 @@ public class FileUtils {
 			FileUtils.silenceDelete(outputFile);
 			throw new MergePartsException("Incorrect combined file size!");
 		}
+	}
+
+	public static byte[] copyToByteArray(InputStream in) throws IOException {
+		if (in == null) {
+			return new byte[0];
+		}
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream(BUFFER_SIZE);
+		copy(in, out);
+		return out.toByteArray();
+	}
+
+	public static void copy(byte[] in, File out) throws IOException {
+		if (in == null) {
+			log.error("No input byte array specified");
+			return;
+		}
+		if (out == null) {
+			log.error("No output File specified");
+			return;
+		}
+		copy(new ByteArrayInputStream(in), Files.newOutputStream(out.toPath()));
 	}
 }

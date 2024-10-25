@@ -9,8 +9,11 @@ import java.util.function.Function;
 @Setter
 public class UploadConfig {
 
-	private long maxFileSize; // no limitation
 	private String temporaryFolder;
 	private String uploadFolder;
+	private String heifConvertPath;
+	private String ffmpegPath;
+	private String ffmpegThumbExt;
+	private String ffmpegThumbStartTime;
 	private Function<MediaInfo, String> mediaHandler;
 }
