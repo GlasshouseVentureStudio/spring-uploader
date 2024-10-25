@@ -1,22 +1,20 @@
 package io.fruitful.spring.uploader.dto;
 
 import io.fruitful.spring.uploader.util.StringHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.FileCleanerCleanup;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.apache.commons.io.FileCleaningTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Getter
@@ -26,7 +24,7 @@ public class MultipartUploadParser {
 
 	private Map<String, String> params = new HashMap<>();
 
-	private List<FileItem> files = new ArrayList<>();
+	private List<DiskFileItem> files = new ArrayList<>();
 
 	// fileItemsFactory is a field (even though it's scoped to the constructor) to
 	// prevent the
@@ -38,16 +36,17 @@ public class MultipartUploadParser {
 	// file when the FileItemsFactory marker object is GCed
 	private DiskFileItemFactory fileItemsFactory;
 
-	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context)
-			throws IOException, FileUploadException {
+	public MultipartUploadParser(HttpServletRequest request, File repository)
+			throws IOException {
 		if (!repository.exists() && !repository.mkdirs()) {
 			throw new IOException("Unable to mkdirs to " + repository.getPath());
 		}
 
-		fileItemsFactory = setupFileItemFactory(repository, context);
+		fileItemsFactory = setupFileItemFactory(repository);
 
-		ServletFileUpload upload = new ServletFileUpload(fileItemsFactory);
-		List<FileItem> formFileItems = upload.parseRequest(request);
+		JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload =
+				new JakartaServletFileUpload<>(fileItemsFactory);
+		List<DiskFileItem> formFileItems = upload.parseRequest(request);
 
 		parseFormFields(formFileItems);
 
@@ -64,15 +63,12 @@ public class MultipartUploadParser {
 		}
 	}
 
-	private DiskFileItemFactory setupFileItemFactory(File repository, ServletContext context) {
-		DiskFileItemFactory factory = new DiskFileItemFactory();
-		factory.setSizeThreshold(DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD);
-		factory.setRepository(repository);
-
-		FileCleaningTracker pTracker = FileCleanerCleanup.getFileCleaningTracker(context);
-		factory.setFileCleaningTracker(pTracker);
-
-		return factory;
+	private DiskFileItemFactory setupFileItemFactory(File repository) {
+		return DiskFileItemFactory.builder()
+				.setBufferSize(DiskFileItemFactory.DEFAULT_THRESHOLD)
+				.setPath(repository.toPath())
+				.setFileCleaningTracker(new FileCleaningTracker())
+				.get();
 	}
 
 	private void writeDebugInfo(HttpServletRequest request) {
@@ -87,11 +83,11 @@ public class MultipartUploadParser {
 		}
 	}
 
-	private void parseFormFields(List<FileItem> items) throws UnsupportedEncodingException {
-		for (FileItem item : items) {
+	private void parseFormFields(List<DiskFileItem> items) throws IOException {
+		for (DiskFileItem item : items) {
 			if (item.isFormField()) {
 				String key = item.getFieldName();
-				String value = item.getString("UTF-8");
+				String value = item.getString(StandardCharsets.UTF_8);
 				if (StringHelper.hasLength(key)) {
 					params.put(key, value);
 				}
@@ -101,7 +97,7 @@ public class MultipartUploadParser {
 		}
 	}
 
-	public List<FileItem> getFiles() {
+	public List<DiskFileItem> getFiles() {
 		if (files.isEmpty()) {
 			throw new RuntimeException("No FileItems exist.");
 		}
@@ -109,7 +105,7 @@ public class MultipartUploadParser {
 		return files;
 	}
 
-	public FileItem getFirstFile() {
+	public DiskFileItem getFirstFile() {
 		if (files.isEmpty()) {
 			throw new RuntimeException("No FileItems exist.");
 		}

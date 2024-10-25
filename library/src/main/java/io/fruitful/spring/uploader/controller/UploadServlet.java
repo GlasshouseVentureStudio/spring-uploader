@@ -6,12 +6,12 @@ import io.fruitful.spring.uploader.exception.MergePartsException;
 import io.fruitful.spring.uploader.service.MediaHelperService;
 import io.fruitful.spring.uploader.util.FileUtils;
 import io.fruitful.spring.uploader.util.StringHelper;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.Optional;
 import java.util.function.Function;
@@ -19,6 +19,7 @@ import java.util.function.Function;
 @Slf4j
 public class UploadServlet extends HttpServlet {
 
+	@Serial
 	private static final long serialVersionUID = -1551073211800080798L;
 	private static final int SUCCESS_RESPONSE_CODE = 200;
 
@@ -48,9 +49,8 @@ public class UploadServlet extends HttpServlet {
 		resp.setContentType("text/plain");
 		resp.setStatus(SUCCESS_RESPONSE_CODE);
 		try {
-			if (ServletFileUpload.isMultipartContent(req)) {
-				MultipartUploadParser multipartUploadParser = new MultipartUploadParser(
-						req, tempDir, getServletContext());
+			if (JakartaServletFileUpload.isMultipartContent(req)) {
+				MultipartUploadParser multipartUploadParser = new MultipartUploadParser(req, tempDir);
 				RequestParser requestParser = RequestParser.getInstance(req, multipartUploadParser);
 				writeFileForMultipartRequest(requestParser, resp);
 

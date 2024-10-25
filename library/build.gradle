@@ -5,8 +5,11 @@ plugins {
 }
 
 group = 'io.fruitful.spring'
-version = '0.0.1'
-sourceCompatibility = '1.8'
+version = '1.0.1'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
 
 jar {
     enabled = true
@@ -24,13 +27,15 @@ repositories {
 }
 
 dependencies {
-    implementation 'commons-fileupload:commons-fileupload:1.5'
-    compileOnly "org.projectlombok:lombok:1.18.30"
-    annotationProcessor "org.projectlombok:lombok:1.18.30"
-    implementation 'org.apache.tika:tika-core:2.9.1'
-    implementation 'com.drewnoakes:metadata-extractor:2.18.0'
+//    implementation 'org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M2'
+    implementation 'org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1'
+//    implementation 'commons-fileupload:commons-fileupload:1.5'
+    compileOnly "org.projectlombok:lombok:1.18.34"
+    annotationProcessor "org.projectlombok:lombok:1.18.34"
+    implementation 'org.apache.tika:tika-core:3.0.0'
+    implementation 'com.drewnoakes:metadata-extractor:2.19.0'
     implementation 'org.imgscalr:imgscalr-lib:4.2'
-    compileOnly 'javax.servlet:servlet-api:3.0-alpha-1'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}
