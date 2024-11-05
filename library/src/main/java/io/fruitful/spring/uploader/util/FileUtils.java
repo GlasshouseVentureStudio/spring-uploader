@@ -142,6 +142,7 @@ public class FileUtils {
 
 	public static File saveFileOnServer(File uploadDir, InputStream file, String extension, String fileName)
 			throws IOException {
+		long start = System.currentTimeMillis();
 		// Generate random file name if not provide
 		if (StringHelper.isEmpty(fileName)) {
 			fileName = UUID.randomUUID().toString().replace("-", "");
@@ -163,6 +164,8 @@ public class FileUtils {
 		} finally {
 			IOUtils.closeQuietly(file);
 		}
+		log.warn("Save file {} on server in {} ms", fileOnServer.getAbsolutePath(),
+		         System.currentTimeMillis() - start);
 		return fileOnServer;
 	}
 

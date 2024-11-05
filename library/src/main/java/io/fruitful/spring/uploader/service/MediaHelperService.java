@@ -78,6 +78,7 @@ public class MediaHelperService {
 
 	public static void saveStaticImage(File uploadDir, MediaInfo media, File imageFile, boolean origin, String ext)
 			throws Exception {
+		long start = System.currentTimeMillis();
 		BufferedImage buffImage;
 		// if not upload original image, must process rotate and enable
 		// progressive ...
@@ -102,6 +103,7 @@ public class MediaHelperService {
 		} else {
 			log.error("<<< Unable to extract thumbnail: {} >>>", imageFile.getName());
 		}
+		log.warn("Save static image in {} ms", System.currentTimeMillis() - start);
 	}
 
 	public static void saveThumbnailMedia(MediaInfo media, File thumbnail) throws IOException {
