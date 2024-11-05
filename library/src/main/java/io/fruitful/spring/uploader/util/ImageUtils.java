@@ -39,7 +39,7 @@ public class ImageUtils {
 	public static final int MAX_STATIC_IMAGE_FILE_SIZE = 3000000;
 
 	public static BufferedImage rotateImage(File imageFile) {
-
+		long start = System.currentTimeMillis();
 		BufferedImage buffOriginalImage = null;
 		if (imageFile.exists()) {
 			try {
@@ -97,7 +97,7 @@ public class ImageUtils {
 				log.error("Unable to check Image Rotated");
 			}
 		}
-
+		log.warn("Rotate image in {} ms", System.currentTimeMillis() - start);
 		return buffOriginalImage;
 	}
 
