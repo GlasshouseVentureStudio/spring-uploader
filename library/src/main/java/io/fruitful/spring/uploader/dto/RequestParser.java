@@ -94,16 +94,24 @@ public class RequestParser {
 		String partNumStr = multipartUploadParser.getParams().get(PART_INDEX_PARAM);
 		if (partNumStr != null) {
 			requestParser.partIndex = Integer.parseInt(partNumStr);
+		}
 
-			requestParser.totalFileSize = Long.parseLong(multipartUploadParser.getParams().get(FILE_SIZE_PARAM));
-			requestParser.totalParts = Integer.parseInt(multipartUploadParser.getParams().get(TOTAL_PARTS_PARAM));
-			if (multipartUploadParser.getParams().get(PART_FILESIZE_PARAM) != null) {
-				try {
-					requestParser.fileSize =
-							Long.parseLong(multipartUploadParser.getParams().get(PART_FILESIZE_PARAM));
-				} catch (NumberFormatException nfe) {
-					requestParser.fileSize = null;
-				}
+		String fileSizeStr = multipartUploadParser.getParams().get(FILE_SIZE_PARAM);
+		if (fileSizeStr != null) {
+			requestParser.totalFileSize = Long.parseLong(fileSizeStr);
+		}
+
+		String totalPartStr = multipartUploadParser.getParams().get(TOTAL_PARTS_PARAM);
+		if (totalPartStr != null) {
+			requestParser.totalParts = Integer.parseInt(totalPartStr);
+		}
+
+		String partFileSizeStr = multipartUploadParser.getParams().get(PART_FILESIZE_PARAM);
+		if (partFileSizeStr != null) {
+			try {
+				requestParser.fileSize = Long.parseLong(partFileSizeStr);
+			} catch (NumberFormatException nfe) {
+				requestParser.fileSize = null;
 			}
 		}
 
@@ -123,22 +131,31 @@ public class RequestParser {
 	}
 
 	private static void parseQueryStringParams(RequestParser requestParser, HttpServletRequest req) {
-		if (req.getParameter(GENERATE_ERROR_PARAM) != null) {
-			requestParser.generateError = Boolean.parseBoolean(req.getParameter(GENERATE_ERROR_PARAM));
+		String generateErrorStr = req.getParameter(GENERATE_ERROR_PARAM);
+		if (generateErrorStr != null) {
+			requestParser.generateError = Boolean.parseBoolean(generateErrorStr);
 		}
 
 		String partNumStr = req.getParameter(PART_INDEX_PARAM);
 		if (partNumStr != null) {
 			requestParser.partIndex = Integer.parseInt(partNumStr);
-			requestParser.totalFileSize = Long.parseLong(req.getParameter(FILE_SIZE_PARAM));
-			requestParser.totalParts = Integer.parseInt(req.getParameter(TOTAL_PARTS_PARAM));
-			if (req.getParameter(PART_FILESIZE_PARAM) != null) {
-				try {
-					requestParser.fileSize = Long.parseLong(req.getParameter(PART_FILESIZE_PARAM));
-				} catch (NumberFormatException nfe) {
-					requestParser.fileSize = null;
-				}
-			}
+		}
+
+		String fileSizeStr = req.getParameter(FILE_SIZE_PARAM);
+		if (fileSizeStr != null) {
+			requestParser.totalFileSize = Long.parseLong(fileSizeStr);
+		}
+
+		String totalPartStr = req.getParameter(TOTAL_PARTS_PARAM);
+		if (totalPartStr != null) {
+			requestParser.totalParts = Integer.parseInt(totalPartStr);
+		}
+
+		String partFileSizeStr = req.getParameter(PART_FILESIZE_PARAM);
+		try {
+			requestParser.fileSize = partFileSizeStr != null ? Long.parseLong(partFileSizeStr) : null;
+		} catch (NumberFormatException nfe) {
+			requestParser.fileSize = null;
 		}
 
 		Enumeration<String> paramNames = req.getParameterNames();

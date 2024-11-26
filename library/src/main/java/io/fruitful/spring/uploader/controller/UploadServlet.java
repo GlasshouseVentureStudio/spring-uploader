@@ -130,7 +130,7 @@ public class UploadServlet extends HttpServlet {
 
 	private void writeResponse(PrintWriter writer, String failureReason) {
 		if (failureReason == null) {
-			writer.print("{\"success\": true}");
+			writer.print("{\"responseData\": {\"success\": true}}");
 		} else {
 			writer.print("{\"error\": \"" + failureReason + "\"}");
 		}

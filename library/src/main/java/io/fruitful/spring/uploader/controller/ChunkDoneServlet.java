@@ -158,13 +158,13 @@ public class ChunkDoneServlet extends HttpServlet {
 
 	private void writeResponse(PrintWriter writer, String failureReason) {
 		if (failureReason == null) {
-			writer.print("{\"success\": true}");
+			writer.print("{\"responseData\": {\"success\": true}}");
 		} else {
 			writer.print("{\"error\": \"" + failureReason + "\"}");
 		}
 	}
 
 	private void writeChunkDoneResponse(PrintWriter writer, String mediaId) {
-		writer.print("{\"success\": true, \"mediaId\": \"" + mediaId + "\"}");
+		writer.print("{\"responseData\": {\"success\": true, \"mediaId\": \"" + mediaId + "\"}}");
 	}
 }
