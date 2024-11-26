@@ -231,7 +231,7 @@ public class ImageUtils {
 
 				case MediaConst.IMAGE_SIZE_XXLARGE:
 					if (buffImage.getWidth() >= IMAGE_SIZE_XXLARGE_WIDTH) {
-						String xxlargePath = String.format("%s%s_xl.%s", uploadDir,
+						String xxlargePath = String.format("%s%s_xxl.%s", uploadDir,
 						                                   baseName,
 						                                   MediaConst.EXT_JPG);
 						width = IMAGE_SIZE_XXLARGE_WIDTH;
@@ -259,7 +259,7 @@ public class ImageUtils {
 
 			buffImage.getGraphics().dispose();
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			log.error(e.getMessage(), e);
 		}
 
 		return null;

@@ -1,9 +1,9 @@
 package io.fruitful.spring.uploader.service;
 
 import io.fruitful.spring.uploader.constant.MediaConst;
+import io.fruitful.spring.uploader.dto.ChunkDoneConfig;
 import io.fruitful.spring.uploader.dto.MediaInfo;
 import io.fruitful.spring.uploader.dto.MediaThumbnailInfo;
-import io.fruitful.spring.uploader.dto.UploadConfig;
 import io.fruitful.spring.uploader.enumeration.FileSupportEnum;
 import io.fruitful.spring.uploader.util.FileUtils;
 import io.fruitful.spring.uploader.util.ImageUtils;
@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class MediaHelperService {
 
 	public static void saveMediaInfo(File uploadDir, MediaInfo media, File file, String fileType, String ext,
-	                                 boolean origin, UploadConfig uploadConfig) {
+	                                 boolean origin, ChunkDoneConfig uploadConfig) {
 		try {
 			if (!file.exists()) {
 				log.warn("File not exists {}", file.getName());
@@ -180,7 +180,7 @@ public class MediaHelperService {
 	}
 
 	public static void saveVideo(File uploadDir, MediaInfo media, File videoFile, String ext,
-	                             UploadConfig uploadConfig) throws IOException {
+	                             ChunkDoneConfig uploadConfig) throws IOException {
 		// from now on we always convert the media to optimise the streaming speed
 		media.setProcessing(true);
 		// all video will be converted to mp4 format
@@ -192,7 +192,7 @@ public class MediaHelperService {
 		}
 	}
 
-	public static File extractVideoThumbnail(File uploadDir, String filePath, UploadConfig uploadConfig) {
+	public static File extractVideoThumbnail(File uploadDir, String filePath, ChunkDoneConfig uploadConfig) {
 		// using FFMPEG to get first frame
 		String ffmpegPath = uploadConfig.getFfmpegPath();
 		String ffmpegThumbExt = uploadConfig.getFfmpegThumbExt();

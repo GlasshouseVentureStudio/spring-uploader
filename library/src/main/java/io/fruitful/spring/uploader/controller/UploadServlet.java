@@ -1,11 +1,9 @@
 package io.fruitful.spring.uploader.controller;
 
-import io.fruitful.spring.uploader.dto.*;
-import io.fruitful.spring.uploader.enumeration.FileSupportEnum;
-import io.fruitful.spring.uploader.exception.MergePartsException;
-import io.fruitful.spring.uploader.service.MediaHelperService;
+import io.fruitful.spring.uploader.dto.MultipartUploadParser;
+import io.fruitful.spring.uploader.dto.RequestParser;
+import io.fruitful.spring.uploader.dto.UploadConfig;
 import io.fruitful.spring.uploader.util.FileUtils;
-import io.fruitful.spring.uploader.util.StringHelper;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,9 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 
-import java.io.*;
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.Serial;
 import java.util.Optional;
-import java.util.function.Function;
 
 @Slf4j
 public class UploadServlet extends HttpServlet {
@@ -48,7 +47,8 @@ public class UploadServlet extends HttpServlet {
 		try {
 			if (JakartaServletFileUpload.isMultipartContent(req)) {
 				ServletContext servletContext = getServletContext();
-				MultipartUploadParser multipartUploadParser = new MultipartUploadParser(req, tempDir, servletContext);
+				MultipartUploadParser multipartUploadParser = new MultipartUploadParser(req, tempDir, servletContext,
+				                                                                        true);
 				RequestParser requestParser = RequestParser.getInstance(req, multipartUploadParser);
 				writeFileForMultipartRequest(requestParser, resp);
 
@@ -82,32 +82,22 @@ public class UploadServlet extends HttpServlet {
 		         requestParser.getPartIndex(),
 		         requestParser.getTotalParts());
 
-
 		File dir = new File(uploadDir, requestParser.getUuid());
 		FileUtils.mkDir(dir);
 
 		String contentLengthHeader = req.getHeader("Content-Length");
 		long expectedFileSize = Long.parseLong(contentLengthHeader);
 
-		String mediaId = null;
 		if (requestParser.getPartIndex() >= 0) {
 			if (requestParser.getPartIndex() >= requestParser.getTotalParts()) {
 				return;
 			}
-
 			String outputFile = requestParser.getUuid() + "_" + String.format("%05d", requestParser.getPartIndex());
 			FileUtils.writeFile(req.getInputStream(), new File(dir, outputFile), null);
-
-			mediaId = chunkDone(requestParser, dir, requestParser.getFilename());
 		} else {
 			FileUtils.writeFile(req.getInputStream(), new File(dir, requestParser.getFilename()), expectedFileSize);
 		}
-
-		if (mediaId == null) {
-			writeResponse(resp.getWriter(), requestParser.generateError() ? "Generated error" : null);
-		} else {
-			writeChunkDoneResponse(resp.getWriter(), mediaId);
-		}
+		writeResponse(resp.getWriter(), requestParser.generateError() ? "Generated error" : null);
 	}
 
 	private void writeFileForMultipartRequest(RequestParser requestParser,
@@ -122,97 +112,20 @@ public class UploadServlet extends HttpServlet {
 		File dir = new File(uploadDir, requestParser.getUuid());
 		FileUtils.mkDir(dir);
 
-		String mediaId = null;
 		if (requestParser.getPartIndex() >= 0) {
 			if (requestParser.getPartIndex() >= requestParser.getTotalParts()) {
 				return;
 			}
-
 			String outputFile = requestParser.getUuid() + "_" + String.format("%05d", requestParser.getPartIndex());
 			FileUtils.writeFile(requestParser.getUploadItem().getInputStream(),
 			                    new File(dir, outputFile),
 			                    requestParser.getFileSize());
-
-			mediaId = chunkDone(requestParser, dir, requestParser.getOriginalFilename());
 		} else {
 			FileUtils.writeFile(requestParser.getUploadItem().getInputStream(),
 			                    new File(dir, requestParser.getFilename()),
 			                    requestParser.getFileSize());
 		}
-
-		if (mediaId == null) {
-			writeResponse(resp.getWriter(), requestParser.generateError() ? "Generated error" : null);
-		} else {
-			writeChunkDoneResponse(resp.getWriter(), mediaId);
-		}
-	}
-
-	private String chunkDone(RequestParser request, File dir, String outputFileName)
-			throws IOException, MergePartsException {
-		FilenameFilter acceptedFilter = (dir1, name) -> {
-			String lowercaseName = name.toLowerCase();
-			return lowercaseName.startsWith(request.getUuid());
-		};
-		synchronized (this) {
-			String[] dirs = dir.list(acceptedFilter);
-			if (dirs == null || request.getTotalParts() != dirs.length) {
-				return null;
-			}
-			File[] parts = FileUtils.getPartitionFiles(dir, request.getUuid());
-			File outputFile = new File(dir, outputFileName);
-			// Make sure we don't have any existing file before writing the output
-			FileUtils.silenceDelete(outputFile);
-			for (File part : parts) {
-				FileUtils.mergeFiles(outputFile, part);
-			}
-
-			FileUtils.assertCombinedFileIsValid(uploadDir, request.getTotalFileSize(), outputFile,
-			                                    request.getUuid());
-			FileUtils.deletePartitionFiles(dir, request.getUuid());
-
-			FileInputStream fileInputStream = new FileInputStream(outputFile);
-			MultipartFile multipartFile = new DiskMultipartFile(request.getFilename(), request.getFilename(),
-			                                                    null, fileInputStream);
-			boolean original = Optional.ofNullable(request.getOriginal()).orElse(false);
-			MediaInfo mediaInfo = buildMediaInfo(multipartFile, request.getUuid(), original);
-			FileUtils.deleteDirectory(dir);
-
-			Function<MediaInfo, String> mediaHandler = config.getMediaHandler();
-			return mediaHandler != null ? mediaHandler.apply(mediaInfo) : null;
-		}
-	}
-
-	private MediaInfo buildMediaInfo(MultipartFile file, String guid, boolean original) {
-		if (file.getSize() == 0) {
-			log.error("Upload file is null or empty");
-			return null;
-		}
-
-		String contentType = file.getContentType();
-		String fileType = FileSupportEnum.getFileType(contentType);
-		String originalFilename = FileUtils.getName(file.getOriginalFilename());
-		String originalExt = FileUtils.getExtension(file);
-		MediaInfo media = new MediaInfo();
-		try {
-			File uploadedFile = FileUtils.saveFileOnServer(uploadDir, file.getInputStream(), originalExt, null);
-
-			if (StringHelper.isEmpty(contentType) || contentType.equals("application/octet-stream")) {
-				contentType = FileUtils.guessContentType(uploadedFile);
-				fileType = FileSupportEnum.getFileType(contentType);
-			}
-
-			media.setGuid(guid);
-			media.setContentType(contentType);
-			media.setOriginalFilename(originalFilename);
-			media.setUrl(uploadedFile.getName());
-			media.setFilename(uploadedFile.getName());
-
-			MediaHelperService.saveMediaInfo(uploadDir, media, uploadedFile, fileType, originalExt, original, config);
-
-		} catch (IOException e) {
-			log.error(e.getMessage());
-		}
-		return media;
+		writeResponse(resp.getWriter(), requestParser.generateError() ? "Generated error" : null);
 	}
 
 	private void writeResponse(PrintWriter writer, String failureReason) {
@@ -221,9 +134,5 @@ public class UploadServlet extends HttpServlet {
 		} else {
 			writer.print("{\"error\": \"" + failureReason + "\"}");
 		}
-	}
-
-	private void writeChunkDoneResponse(PrintWriter writer, String mediaId) {
-		writer.print("{\"success\": true, \"mediaId\": \"" + mediaId + "\"}");
 	}
 }

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.FileItem;
 
 import java.io.BufferedReader;
@@ -60,8 +61,11 @@ public class RequestParser {
 				parseQueryStringParams(requestParser, request);
 			}
 		} else {
-			requestParser.uploadItem = multipartUploadParser.getFirstFile();
-			requestParser.filename = multipartUploadParser.getFirstFile().getName();
+			DiskFileItem fileItem = multipartUploadParser.getFirstFile();
+			if (fileItem != null) {
+				requestParser.uploadItem = fileItem;
+				requestParser.filename = fileItem.getName();
+			}
 
 			//params could be in body or query string, depending on Fine Uploader request option properties
 			parseRequestBodyParams(requestParser, multipartUploadParser);

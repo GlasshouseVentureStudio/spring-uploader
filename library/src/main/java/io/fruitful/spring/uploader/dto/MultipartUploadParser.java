@@ -37,7 +37,7 @@ public class MultipartUploadParser {
 	// file when the FileItemsFactory marker object is GCed
 	private DiskFileItemFactory fileItemsFactory;
 
-	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context)
+	public MultipartUploadParser(HttpServletRequest request, File repository, ServletContext context, boolean isUpload)
 			throws IOException {
 		if (!repository.exists() && !repository.mkdirs()) {
 			throw new IOException("Unable to mkdirs to " + repository.getAbsolutePath());
@@ -51,12 +51,12 @@ public class MultipartUploadParser {
 
 		parseFormFields(formFileItems);
 
-		if (files.isEmpty()) {
-			log.warn("No files were found when processing the requst. Debugging info follows.");
+		if (isUpload && files.isEmpty()) {
+			log.warn("No files were found when processing the request. Debugging info follows.");
 
 			writeDebugInfo(request);
 
-			throw new FileUploadException("No files were found when processing the requst.");
+			throw new FileUploadException("No files were found when processing the request.");
 		} else {
 			if (log.isDebugEnabled()) {
 				writeDebugInfo(request);
@@ -98,19 +98,7 @@ public class MultipartUploadParser {
 		}
 	}
 
-	public List<DiskFileItem> getFiles() {
-		if (files.isEmpty()) {
-			throw new RuntimeException("No FileItems exist.");
-		}
-
-		return files;
-	}
-
 	public DiskFileItem getFirstFile() {
-		if (files.isEmpty()) {
-			throw new RuntimeException("No FileItems exist.");
-		}
-
-		return files.iterator().next();
+		return files.isEmpty() ? null : files.getFirst();
 	}
 }
