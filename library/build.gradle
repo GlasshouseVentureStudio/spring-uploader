@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'io.fruitful.spring'
+group = 'com.bbd'
 version = '1.0.1'
 
 java {
@@ -39,14 +39,37 @@ dependencies {
 
 tasks.register("prepareKotlinBuildScriptModel"){}
 
+
 publishing {
+    println "Username: " + System.getenv("NEXUS_USERNAME")
+    println "Password: " + (System.getenv("NEXUS_PASSWORD") != null ? "***" : "NOT SET")
     publications {
         mavenJava(MavenPublication) {
+            groupId 'com.bbd'
+            artifactId 'uploader'
+            version '0.0.1'
             from components.java
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
         }
     }
+
     repositories {
-        mavenLocal()
+        maven {
+            name = "nexus"
+            url = uri("https://nexus.glasshouseventure.studio/repository/maven-releases/")
+            credentials {
+                username = System.getenv("NEXUS_USERNAME")
+                password = System.getenv("NEXUS_PASSWORD")
+            }
+        }
     }
 }
 
