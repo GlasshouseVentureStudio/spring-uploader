@@ -17,7 +17,14 @@ public class ShellCommandExecutor {
 
 	public ShellCommandExecutor(String app, String... arguments) {
 		List<String> commands = new ArrayList<>();
-		commands.add(app);
+		// Fallback: If app path doesn't exist, try using just the binary name
+		if (app.contains(java.io.File.separator) && !new java.io.File(app).exists()) {
+			log.warn("Configured executable path '{}' not found, falling back to binary name.", app);
+			commands.add(new java.io.File(app).getName());
+		} else {
+			commands.add(app);
+		}
+
 		if (arguments != null && arguments.length > 0) {
 			commands.addAll(Arrays.asList(arguments));
 		}

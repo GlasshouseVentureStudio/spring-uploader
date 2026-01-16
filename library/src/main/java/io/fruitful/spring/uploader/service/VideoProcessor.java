@@ -11,8 +11,15 @@ import java.io.*;
 @Slf4j
 public class VideoProcessor extends MediaProcessor {
 
+	private File workDir;
+
 	public VideoProcessor(String ffmpegPath) {
 		super(ffmpegPath);
+	}
+
+	public VideoProcessor(String ffmpegPath, File workDir) {
+		super(ffmpegPath);
+		this.workDir = workDir;
 	}
 
 	/**
@@ -23,17 +30,17 @@ public class VideoProcessor extends MediaProcessor {
 
 		try {
 			File outputFile = new File(destination);
-			FileUtils.delete(outputFile);
+			FileUtils.safeDelete(outputFile, workDir);
 			new ShellCommandExecutor(ffmpegPath, "-y",
-			                         "-loglevel", "panic",
-			                         "-i", input,
-			                         "-preset", "superfast",
-			                         "-movflags", "+faststart",
-			                         "-tune", "fastdecode",
-			                         "-crf", "25",
-			                         "-bufsize", "2M",
-			                         "-c:a", "aac",
-			                         destination).execute(CONVERSION_TIMEOUT);
+					"-loglevel", "panic",
+					"-i", input,
+					"-preset", "superfast",
+					"-movflags", "+faststart",
+					"-tune", "fastdecode",
+					"-crf", "25",
+					"-bufsize", "2M",
+					"-c:a", "aac",
+					destination).execute(CONVERSION_TIMEOUT);
 
 			if (outputFile.exists() && outputFile.length() > 0) {
 				return outputFile;
@@ -58,17 +65,17 @@ public class VideoProcessor extends MediaProcessor {
 
 		try {
 			File outputFile = new File(destination);
-			FileUtils.delete(outputFile);
+			FileUtils.safeDelete(outputFile, workDir);
 
 			new ShellCommandExecutor(ffmpegPath, "-y", "-loglevel", "panic", "-i", input, "-ss", startTime,
-			                         "-vframes",
-			                         "1", destination).execute(CONVERSION_TIMEOUT);
+					"-vframes",
+					"1", destination).execute(CONVERSION_TIMEOUT);
 
 			if (outputFile.exists() && outputFile.length() > 0) {
 
 				FileInputStream fileInputStream = new FileInputStream(outputFile);
 				InputStream stream = ImageUtils.resizeImage(fileInputStream, thumbExt,
-				                                            MediaConst.THUMBNAIL_WIDTH, 0);
+						MediaConst.THUMBNAIL_WIDTH, 0);
 				org.apache.commons.io.FileUtils.copyInputStreamToFile(stream, outputFile);
 
 				return outputFile;
@@ -81,21 +88,14 @@ public class VideoProcessor extends MediaProcessor {
 	}
 
 	public File process(File uploadDir, String localThumbnail, String playIconPath, String ext, Integer width,
-	                    Integer height) {
+			Integer height) {
 		try {
 
 			// generate temporary file name
 			String randomName = String.format("%s.%s", StringHelper.generateUniqueString(), ext);
 
 			File randomFile = new File(uploadDir, randomName);
-			FileUtils.delete(randomFile);
-
-			// ProcessBuilder thumbProcessBuilder = new
-			// ProcessBuilder(ffmpegPath, "-y", "-loglevel", "panic", "-i",
-			// filePath, "-i", playIconPath, "-filter_complex", "overlay=90:70",
-			// "-preset", "superfast",
-			// randomPath);
-
+			FileUtils.safeDelete(randomFile, uploadDir);
 			String overlay = "overlay=90:70";
 			if (width != null && height != null) {
 				// size of logo is 60 x 60
@@ -103,9 +103,9 @@ public class VideoProcessor extends MediaProcessor {
 			}
 
 			new ShellCommandExecutor(ffmpegPath, "-y", "-loglevel", "panic", "-i", localThumbnail, "-i", playIconPath,
-			                         "-filter_complex", overlay, "-preset", "superfast",
-			                         randomFile.toPath().toString()).execute(
-					CONVERSION_TIMEOUT);
+					"-filter_complex", overlay, "-preset", "superfast",
+					randomFile.toPath().toString()).execute(
+							CONVERSION_TIMEOUT);
 
 			if (randomFile.exists() && randomFile.length() > 0) {
 
@@ -127,14 +127,9 @@ public class VideoProcessor extends MediaProcessor {
 		String regex = "rotate=(.*)";
 
 		try {
-			// // "v" is log level
-			// ProcessBuilder pb = new ProcessBuilder(ffprobePath, "-v",
-			// "error", "-show_entries", "stream_tags=rotate",
-			// "-of", "default=noprint_wrappers=1", filePath);
-
 			String outPutString = new ShellCommandExecutor(ffprobePath, "-v", "error", "-show_entries",
-			                                               "stream_tags=rotate", "-of", "default=noprint_wrappers=1",
-			                                               filePath).execute(CONVERSION_TIMEOUT);
+					"stream_tags=rotate", "-of", "default=noprint_wrappers=1",
+					filePath).execute(CONVERSION_TIMEOUT);
 
 			if (StringHelper.hasText(outPutString)) {
 				// Find info in output string
@@ -146,9 +141,8 @@ public class VideoProcessor extends MediaProcessor {
 		return null;
 	}
 
-
 	public String detectDuration(String filePath) {
-		String[] cmd = {ffmpegPath, "-i", filePath};
+		String[] cmd = { ffmpegPath, "-i", filePath };
 
 		try {
 			Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();

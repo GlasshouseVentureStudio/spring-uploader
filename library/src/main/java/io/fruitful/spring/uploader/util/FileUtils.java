@@ -244,6 +244,37 @@ public class FileUtils {
 		Files.delete(file.toPath());
 	}
 
+	public static void safeDelete(final File file, final File baseDir) {
+		if (file == null || !file.exists()) {
+			return;
+		}
+		try {
+			if (baseDir != null) {
+				java.nio.file.Path filePath = file.toPath().toAbsolutePath().normalize();
+				java.nio.file.Path basePath = baseDir.toPath().toAbsolutePath().normalize();
+
+				if (!filePath.startsWith(basePath)) {
+					log.warn("Attempt to delete file outside of base directory: {} (Base: {})", filePath, basePath);
+					return;
+				}
+			}
+
+			if (isSymlink(file)) {
+				log.warn("Attempt to delete a symlink, refusing: {}", file.getAbsolutePath());
+				return;
+			}
+
+			if (file.isDirectory()) {
+				log.warn("Attempt to delete a directory with safeDelete, refusing: {}", file.getAbsolutePath());
+				return;
+			}
+
+			Files.deleteIfExists(file.toPath());
+		} catch (Exception e) {
+			log.error("Failed to safely delete file: {}", file.getAbsolutePath(), e);
+		}
+	}
+
 	public static void cleanDirectory(final File directory) throws IOException {
 		File[] files = directory.listFiles();
 

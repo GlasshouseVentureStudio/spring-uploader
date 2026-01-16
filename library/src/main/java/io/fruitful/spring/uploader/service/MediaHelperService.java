@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class MediaHelperService {
 
 	public static void saveMediaInfo(File uploadDir, MediaInfo media, File file, String fileType, String ext,
-	                                 boolean origin, ChunkDoneConfig uploadConfig) {
+			boolean origin, ChunkDoneConfig uploadConfig) {
 		try {
 			if (!file.exists()) {
 				log.warn("File not exists {}", file.getName());
@@ -73,7 +73,7 @@ public class MediaHelperService {
 	private static boolean isStaticImage(String ext, String mediaContentType) {
 		return MediaConst.EXT_STATIC_IMAGE.contains(ext)
 				|| (mediaContentType != null
-				&& FileSupportEnum.READABLE_IMAGE.getTypes().contains(mediaContentType));
+						&& FileSupportEnum.READABLE_IMAGE.getTypes().contains(mediaContentType));
 	}
 
 	public static void saveStaticImage(File uploadDir, MediaInfo media, File imageFile, boolean origin, String ext)
@@ -129,7 +129,7 @@ public class MediaHelperService {
 	}
 
 	public static File extractStaticImageThumbnail(File uploadDir, InputStream inputStream, String ext,
-	                                               Integer width, Integer height) {
+			Integer width, Integer height) {
 		if (inputStream == null || StringHelper.isEmpty(ext)) {
 			return null;
 		}
@@ -151,7 +151,7 @@ public class MediaHelperService {
 					ByteArrayOutputStream output = new ByteArrayOutputStream();
 					ImageIO.write(image, MediaConst.EXT_GIF, output);
 					thumbnail = FileUtils.saveFileOnServer(uploadDir, new ByteArrayInputStream(output.toByteArray()),
-					                                       MediaConst.EXT_GIF, null);
+							MediaConst.EXT_GIF, null);
 				}
 				inputStream.close();
 			}
@@ -180,7 +180,7 @@ public class MediaHelperService {
 	}
 
 	public static void saveVideo(File uploadDir, MediaInfo media, File videoFile, String ext,
-	                             ChunkDoneConfig uploadConfig) throws IOException {
+			ChunkDoneConfig uploadConfig) throws IOException {
 		// from now on we always convert the media to optimise the streaming speed
 		media.setProcessing(true);
 		// all video will be converted to mp4 format
@@ -200,10 +200,11 @@ public class MediaHelperService {
 
 		String baseName = FilenameUtils.getBaseName(ffmpegPath);
 		String thumbName = String.format("%s_extract%s%s", baseName, FilenameUtils.EXTENSION_SEPARATOR,
-		                                 ffmpegThumbExt);
+				ffmpegThumbExt);
 		String thumbPath = new File(uploadDir, thumbName).getAbsolutePath();
 		try {
-			return new VideoProcessor(ffmpegPath).process(filePath, thumbPath, ffmpegStartTime, ffmpegThumbExt);
+			return new VideoProcessor(ffmpegPath, uploadDir).process(filePath, thumbPath, ffmpegStartTime,
+					ffmpegThumbExt);
 		} catch (Exception e) {
 			log.error("Can not extract video thumbnail from filePath: {}", filePath, e);
 		}
@@ -227,7 +228,7 @@ public class MediaHelperService {
 		String fileName = FilenameUtils.getName(imageFile.getAbsolutePath());
 		String newFilePath = imageFile.getParent() + File.separator + fileName + "." + MediaConst.EXT_PNG;
 
-		String[] args = new String[]{ffmpegPath, "-i", imageFile.getAbsolutePath(), newFilePath};
+		String[] args = new String[] { ffmpegPath, "-i", imageFile.getAbsolutePath(), newFilePath };
 
 		try {
 			int convertTimeout = 1; // 1 minute

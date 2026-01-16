@@ -22,7 +22,7 @@ public class UploadService {
 	}
 
 	public VideoProcessor getVideoProcessor() {
-		return new VideoProcessor(uploadConfig.getFfmpegPath());
+		return new VideoProcessor(uploadConfig.getFfmpegPath(), new File(rootUploadDirectory));
 	}
 
 	public AudioProcessor getAudioProcessor() {
@@ -47,7 +47,7 @@ public class UploadService {
 
 	public String convertHeicImage(String imageFullPath) {
 		return ImageUtils.convertHeicImage(imageFullPath, rootUploadDirectory, uploadConfig.getHeifConvertPath(),
-		                                   this::removeFileOnServer);
+				this::removeFileOnServer);
 	}
 
 	public String extractImageDifferentSizes(String imageFullPath, String size) {
