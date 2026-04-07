@@ -127,7 +127,7 @@ public class ImageUtils {
 			String extension = FilenameUtils.getExtension(imageFullPath);
 			Metadata metadata = ImageMetadataReader.readMetadata(imageFile);
 			ExifIFD0Directory exifIFD0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
-			if (exifIFD0 != null) {
+			if (exifIFD0 != null && exifIFD0.containsTag(ExifDirectoryBase.TAG_ORIENTATION)) {
 				int orientation = exifIFD0.getInt(ExifDirectoryBase.TAG_ORIENTATION);
 				Scalr.Rotation rotation = getRotation(orientation);
 				if (rotation != null) {
