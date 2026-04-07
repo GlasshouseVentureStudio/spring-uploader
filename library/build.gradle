@@ -50,7 +50,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId 'com.bbd'
             artifactId 'uploader'
-            version '0.0.1'
+            version '0.0.3'
             from components.java
 
             versionMapping {
